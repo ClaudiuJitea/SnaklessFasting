@@ -18,7 +18,7 @@ A comprehensive React Native mobile application for tracking intermittent fastin
     <img src="https://github.com/user-attachments/assets/494ad788-b7df-4a46-9b1c-c26d3743aee3" alt="IMG-20250622-WA0005" width="200">
     <img src="https://github.com/user-attachments/assets/c27d8467-43ab-4dbc-b5e1-345b389e278d" alt="IMG-20250622-WA0003" width="200">
   </div>
-
+</div>
 
 ## ✨ Features
 

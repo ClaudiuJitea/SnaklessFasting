@@ -2,6 +2,24 @@
 
 A comprehensive React Native mobile application for tracking intermittent fasting with beautiful UI, detailed statistics, and achievement system. Built with Expo and modern React Native technologies.
 
+<div align="center">
+  <img src="./assets/icon.png" alt="NutritionAI Logo" width="128" height="128">
+
+  <!-- First row of 3 images -->
+  <div style="display: flex; justify-content: center; gap: 10px; margin: 10px 0;">
+    <img src="https://github.com/user-attachments/assets/720eeaa9-0a55-41c1-abd2-1502db1be478" alt="IMG-20250622-WA0007" width="200">
+    <img src="https://github.com/user-attachments/assets/fc17c0f6-51f0-4c08-a31a-a26ceaa8466e" alt="IMG-20250622-WA0008" width="200">
+    <img src="https://github.com/user-attachments/assets/7c6c0cf9-4d29-4431-b94b-50d20332d4de" alt="IMG-20250622-WA0006" width="200">
+  </div>
+
+  <!-- Second row of 3 images -->
+  <div style="display: flex; justify-content: center; gap: 10px; margin: 10px 0;">
+    <img src="https://github.com/user-attachments/assets/cb2a0956-9bc9-45bd-8cdf-bb1644fe3c63" alt="IMG-20250622-WA0004" width="200">
+    <img src="https://github.com/user-attachments/assets/494ad788-b7df-4a46-9b1c-c26d3743aee3" alt="IMG-20250622-WA0005" width="200">
+    <img src="https://github.com/user-attachments/assets/c27d8467-43ab-4dbc-b5e1-345b389e278d" alt="IMG-20250622-WA0003" width="200">
+  </div>
+
+
 ## ✨ Features
 
 🕐 **Smart Fasting Timer**: Track your fasting sessions with real-time circular progress indicators

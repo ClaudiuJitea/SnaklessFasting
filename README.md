@@ -61,7 +61,7 @@ A comprehensive React Native mobile application for tracking intermittent fastin
 1. **Clone the repository**
 ```bash
 git clone https://github.com/ClaudiuJitea/SnaklessFasting.git
-cd SnaklessFasting/SnaklessFastingApp
+cd SnaklessFasting
 ```
 
 2. **Install dependencies**

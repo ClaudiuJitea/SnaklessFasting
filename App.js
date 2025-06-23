@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
 import useStore from './store/useStore';
 import './i18n/index.js';
@@ -45,10 +46,10 @@ export default function App() {
   }
 
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style="auto" />
       <AppNavigator isFirstLaunch={isFirstLaunch} />
-    </>
+    </SafeAreaProvider>
   );
 }
 

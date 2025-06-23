@@ -226,11 +226,11 @@ const StatsScreen = ({ navigation }) => {
       <View style={styles.chartLegend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#FF6B6B' }]} />
-          <Text style={styles.legendText}>Goal met</Text>
+          <Text style={styles.legendText}>{t('stats.goalMet')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#FFE5E5' }]} />
-          <Text style={styles.legendText}>Goal not met</Text>
+          <Text style={styles.legendText}>{t('stats.goalNotMet')}</Text>
         </View>
       </View>
     </View>
@@ -296,11 +296,11 @@ const StatsScreen = ({ navigation }) => {
           <View style={styles.chartLegend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#4ECDC4' }]} />
-              <Text style={styles.legendText}>Goal met</Text>
+              <Text style={styles.legendText}>{t('stats.goalMet')}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#E8F8F7' }]} />
-              <Text style={styles.legendText}>Goal not met</Text>
+              <Text style={styles.legendText}>{t('stats.goalNotMet')}</Text>
             </View>
           </View>
         </View>
@@ -337,36 +337,68 @@ const StatsScreen = ({ navigation }) => {
     showModal(t('stats.weightDetails'), content);
   };
 
-  const renderWeightChart = () => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{t('weight.weightTracking')}</Text>
-        <TouchableOpacity onPress={handleWeightSeeMore}>
-          <Text style={styles.seeMoreText}>{t('stats.seeMore')}</Text>
-        </TouchableOpacity>
-      </View>
+  const renderWeightChart = () => {
+    // Calculate actual weight loss from data
+    const calculateWeightLoss = () => {
+      if (weightEntries.length < 2) {
+        return { amount: 0, hasData: false };
+      }
       
-      <View style={styles.chartContainer}>
-        <LineChart
-          data={generateWeightData()}
-          width={screenWidth - 40}
-          height={200}
-          chartConfig={{
-            ...chartConfig,
-            color: (opacity = 1) => `rgba(78, 205, 196, ${opacity})`,
-          }}
-          style={styles.chart}
-          bezier
-        />
-      </View>
+      // Get weight from 30 days ago vs current weight
+      const thirtyDaysAgo = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
+      const recentEntries = weightEntries.filter(entry => 
+        dayjs(entry.date).isAfter(dayjs().subtract(30, 'day'))
+      );
       
-      <View style={styles.weightSummary}>
-        <Text style={styles.weightSummaryText}>
-          {t('stats.youveLost')} <Text style={styles.weightHighlight}>1.5 kg</Text> {t('stats.thisMonth')}!
-        </Text>
+      if (recentEntries.length < 2) {
+        return { amount: 0, hasData: false };
+      }
+      
+      const currentWeight = recentEntries[0]?.weight || 0;
+      const oldWeight = recentEntries[recentEntries.length - 1]?.weight || currentWeight;
+      const weightLoss = oldWeight - currentWeight;
+      
+      return { 
+        amount: Math.max(0, weightLoss), // Only show if actually lost weight
+        hasData: true 
+      };
+    };
+    
+    const weightLoss = calculateWeightLoss();
+    
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{t('weight.weightTracking')}</Text>
+          <TouchableOpacity onPress={handleWeightSeeMore}>
+            <Text style={styles.seeMoreText}>{t('stats.seeMore')}</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.chartContainer}>
+          <LineChart
+            data={generateWeightData()}
+            width={screenWidth - 40}
+            height={200}
+            chartConfig={{
+              ...chartConfig,
+              color: (opacity = 1) => `rgba(78, 205, 196, ${opacity})`,
+            }}
+            style={styles.chart}
+            bezier
+          />
+        </View>
+        
+        {weightLoss.hasData && weightLoss.amount > 0 && (
+          <View style={styles.weightSummary}>
+            <Text style={styles.weightSummaryText}>
+              {t('stats.youveLost')} <Text style={styles.weightHighlight}>{weightLoss.amount.toFixed(1)} kg</Text> {t('stats.thisMonth')}!
+            </Text>
+          </View>
+        )}
       </View>
-    </View>
-  );
+    );
+  };
 
   const showModal = (title, content) => {
     setModalData({ title, content });
@@ -477,11 +509,11 @@ const StatsScreen = ({ navigation }) => {
           <View style={styles.chartLegend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#FF6B6B' }]} />
-              <Text style={styles.legendText}>Goal met</Text>
+              <Text style={styles.legendText}>{t('stats.goalMet')}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#FFE5E5' }]} />
-              <Text style={styles.legendText}>Goal not met</Text>
+              <Text style={styles.legendText}>{t('stats.goalNotMet')}</Text>
             </View>
           </View>
         </View>

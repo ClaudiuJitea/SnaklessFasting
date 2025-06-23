@@ -48,6 +48,8 @@ const getDatabaseConnection = async (retries = 3) => {
     try {
       const database = await initDatabaseConnection();
       if (database) {
+        // Test the connection with a simple query
+        await database.getFirstAsync('SELECT 1');
         return database;
       }
     } catch (error) {
@@ -57,11 +59,29 @@ const getDatabaseConnection = async (retries = 3) => {
       }
       // Reset connection on failure
       db = null;
+      isInitializing = false;
       // Wait before retry
       await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
     }
   }
   throw new Error('Failed to establish database connection after retries');
+};
+
+// Execute database operation with connection validation
+const executeWithValidConnection = async (operation, ...args) => {
+  try {
+    const database = await getDatabaseConnection();
+    if (!database) {
+      throw new Error('Database connection is null');
+    }
+    return await operation(database, ...args);
+  } catch (error) {
+    console.error('Database operation failed:', error);
+    // Reset connection on any database error
+    db = null;
+    isInitializing = false;
+    throw error;
+  }
 };
 
 // Initialize database tables
@@ -181,18 +201,14 @@ export const initDatabase = async () => {
 
 // Fasting session operations
 export const startFastingSession = async (presetType) => {
-  try {
-    const database = await getDatabaseConnection();
+  return executeWithValidConnection(async (database) => {
     const startTime = new Date().toISOString();
     const result = await database.runAsync(
       'INSERT INTO fasting_sessions (start_time, preset_type) VALUES (?, ?)',
       [startTime, presetType]
     );
     return result.lastInsertRowId;
-  } catch (error) {
-    console.error('Error starting fasting session:', error);
-    throw error;
-  }
+  });
 };
 
 export const endFastingSession = async (sessionId) => {
@@ -212,14 +228,15 @@ export const endFastingSession = async (sessionId) => {
 
 export const getCurrentFastingSession = async () => {
   try {
-    const database = await getDatabaseConnection();
-    const result = await database.getFirstAsync(
-      'SELECT * FROM fasting_sessions WHERE end_time IS NULL ORDER BY start_time DESC LIMIT 1'
-    );
-    return result || null;
+    return await executeWithValidConnection(async (database) => {
+      const result = await database.getFirstAsync(
+        'SELECT * FROM fasting_sessions WHERE end_time IS NULL ORDER BY start_time DESC LIMIT 1'
+      );
+      return result || null;
+    });
   } catch (error) {
      console.error('Error getting current fasting session:', error);
-     throw error;
+     return null;
    }
  };
 
@@ -259,31 +276,23 @@ export const updateFastingSession = async (id, updates) => {
 
 // Weight operations
 export const addWeightEntry = async (weight, date) => {
-  try {
-    const database = await getDatabaseConnection();
+  return executeWithValidConnection(async (database) => {
     const result = await database.runAsync(
       'INSERT INTO weight_entries (weight, date) VALUES (?, ?)',
       [weight, date]
     );
     return result.lastInsertRowId;
-  } catch (error) {
-    console.error('Error adding weight entry:', error);
-    throw error;
-  }
+  });
 };
 
 export const getWeightEntries = async (limit = 30) => {
-  try {
-    const database = await getDatabaseConnection();
+  return executeWithValidConnection(async (database) => {
     const result = await database.getAllAsync(
       'SELECT * FROM weight_entries ORDER BY date DESC LIMIT ?',
       [limit]
     );
     return result;
-  } catch (error) {
-    console.error('Error getting weight entries:', error);
-    throw error;
-  }
+  });
 };
 
 // Hydration operations
@@ -407,8 +416,7 @@ export const getAchievements = async () => {
 
 // Statistics operations
 export const getFastingStats = async (days = 7) => {
-  try {
-    const database = await getDatabaseConnection();
+  return executeWithValidConnection(async (database) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     
@@ -422,10 +430,7 @@ export const getFastingStats = async (days = 7) => {
       [startDate.toISOString()]
     );
     return result;
-  } catch (error) {
-    console.error('Error getting fasting stats:', error);
-    throw error;
-  }
+  });
 };
 
 // Get weekly fasting data for charts

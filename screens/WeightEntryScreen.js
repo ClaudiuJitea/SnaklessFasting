@@ -8,7 +8,8 @@ import {
   SafeAreaView,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
@@ -20,29 +21,58 @@ const WeightEntryScreen = ({ navigation }) => {
   const { addWeight, currentWeight, settings } = useStore();
   const [weight, setWeight] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Custom Alert State
+  const [showCustomAlert, setShowCustomAlert] = useState(false);
+  const [customAlertData, setCustomAlertData] = useState({
+    title: '',
+    message: '',
+    type: 'success',
+    buttons: [],
+    icon: 'checkmark-circle'
+  });
+
+  const displayCustomAlert = (title, message, type = 'success', buttons = [], icon = 'checkmark-circle') => {
+    setCustomAlertData({
+      title,
+      message,
+      type,
+      buttons: buttons.length > 0 ? buttons : [
+        {
+          text: t('common.ok'),
+          onPress: () => setShowCustomAlert(false),
+          style: 'primary'
+        }
+      ],
+      icon
+    });
+    setShowCustomAlert(true);
+  };
 
   const handleSaveWeight = async () => {
     if (!weight || isNaN(parseFloat(weight))) {
-      Alert.alert(t('weight.invalidWeight'), t('weight.enterValidWeight'));
+      displayCustomAlert(t('weight.invalidWeight'), t('weight.enterValidWeight'), 'error', [], 'warning');
       return;
     }
 
     const weightValue = parseFloat(weight);
     if (weightValue <= 0 || weightValue > 500) {
-      Alert.alert(t('weight.invalidWeight'), t('weight.enterRealisticWeight'));
+      displayCustomAlert(t('weight.invalidWeight'), t('weight.enterRealisticWeight'), 'error', [], 'warning');
       return;
     }
 
     setIsLoading(true);
     try {
       await addWeight(weightValue);
-      Alert.alert(
+      displayCustomAlert(
         t('weight.weightSaved'),
         t('weight.weightRecorded'),
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        'success',
+        [{ text: t('common.ok'), onPress: () => { setShowCustomAlert(false); navigation.goBack(); }, style: 'primary' }],
+        'checkmark-circle'
       );
     } catch (error) {
-      Alert.alert(t('common.error'), t('weight.failedToSave'));
+      displayCustomAlert(t('common.error'), t('weight.failedToSave'), 'error', [], 'close-circle');
     } finally {
       setIsLoading(false);
     }
@@ -147,6 +177,50 @@ const WeightEntryScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Custom Alert Modal */}
+      <Modal
+        visible={showCustomAlert}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCustomAlert(false)}
+      >
+        <View style={styles.customAlertOverlay}>
+          <View style={styles.customAlertContainer}>
+            <View style={[styles.customAlertIconContainer, { backgroundColor: customAlertData.type === 'success' ? '#F0FDFC' : customAlertData.type === 'error' ? '#FEF2F2' : '#FFF3E0' }]}>
+              <Ionicons 
+                name={customAlertData.icon} 
+                size={50} 
+                color={customAlertData.type === 'success' ? '#4ECDC4' : customAlertData.type === 'error' ? '#E74C3C' : '#FF9800'} 
+              />
+            </View>
+            
+            <Text style={styles.customAlertTitle}>{customAlertData.title}</Text>
+            <Text style={styles.customAlertMessage}>{customAlertData.message}</Text>
+            
+            <View style={styles.customAlertButtons}>
+              {customAlertData.buttons.map((button, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.customAlertButton,
+                    button.style === 'primary' && styles.primaryAlertButton,
+                    customAlertData.buttons.length === 1 && { width: '100%' }
+                  ]}
+                  onPress={button.onPress}
+                >
+                  <Text style={[
+                    styles.customAlertButtonText,
+                    button.style === 'primary' && styles.primaryAlertButtonText
+                  ]}>
+                    {button.text}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -289,6 +363,78 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   saveButtonTextDisabled: {
+    color: '#FFFFFF',
+  },
+  // Custom Alert Modal Styles
+  customAlertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  customAlertContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 25,
+    width: '90%',
+    maxWidth: 350,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  customAlertIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  customAlertTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  customAlertMessage: {
+    fontSize: 16,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 25,
+  },
+  customAlertButtons: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  customAlertButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E1E8ED',
+  },
+  primaryAlertButton: {
+    backgroundColor: '#4ECDC4',
+    borderColor: '#4ECDC4',
+  },
+  customAlertButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7F8C8D',
+  },
+  primaryAlertButtonText: {
     color: '#FFFFFF',
   },
 });

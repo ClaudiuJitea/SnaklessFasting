@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import screens
 import WelcomeScreen from '../screens/WelcomeScreen';
@@ -59,6 +60,7 @@ function ProfileStack() {
 // Main tab navigator
 function MainTabs() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   
   return (
     <Tab.Navigator
@@ -82,9 +84,9 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
-          paddingBottom: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
           paddingTop: 8,
-          height: 65,
+          height: 65 + Math.max(insets.bottom - 8, 0),
           borderTopLeftRadius: 25,
           borderTopRightRadius: 25,
           shadowColor: '#000',

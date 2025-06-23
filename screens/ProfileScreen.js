@@ -55,9 +55,36 @@ const ProfileScreen = ({ navigation }) => {
     gender: userProfile?.gender || 'male'
   });
 
+  // Custom Modal States
+  const [showCustomAlert, setShowCustomAlert] = useState(false);
+  const [customAlertData, setCustomAlertData] = useState({
+    title: '',
+    message: '',
+    type: 'success', // success, error, warning, confirmation
+    buttons: [],
+    icon: 'checkmark-circle'
+  });
+
   const changeLanguage = async (languageCode) => {
     await i18n.changeLanguage(languageCode);
     setShowLanguageModal(false);
+  };
+
+  const displayCustomAlert = (title, message, type = 'success', buttons = [], icon = 'checkmark-circle') => {
+    setCustomAlertData({
+      title,
+      message,
+      type,
+      buttons: buttons.length > 0 ? buttons : [
+        {
+          text: t('common.ok'),
+          onPress: () => setShowCustomAlert(false),
+          style: 'primary'
+        }
+      ],
+      icon
+    });
+    setShowCustomAlert(true);
   };
 
   const handleExportData = async () => {
@@ -76,10 +103,10 @@ const ProfileScreen = ({ navigation }) => {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(fileUri);
       } else {
-        Alert.alert(t('profile.exportComplete'), t('profile.dataExportedSuccessfully'));
+        displayCustomAlert(t('profile.exportComplete'), t('profile.dataExportedSuccessfully'), 'success', [], 'checkmark-circle');
       }
     } catch (error) {
-      Alert.alert(t('profile.exportFailed'), t('profile.failedToExportData'));
+      displayCustomAlert(t('profile.exportFailed'), t('profile.failedToExportData'), 'error', [], 'close-circle');
     } finally {
       setIsExporting(false);
     }
@@ -97,7 +124,7 @@ const ProfileScreen = ({ navigation }) => {
       setShowTargetWeightModal(false);
       setTempTargetWeight('');
     } else {
-      Alert.alert(t('weight.invalidWeight'), t('weight.enterValidWeight'));
+      displayCustomAlert(t('weight.invalidWeight'), t('weight.enterValidWeight'), 'error', [], 'warning');
     }
   };
 
@@ -122,7 +149,7 @@ const ProfileScreen = ({ navigation }) => {
       setShowHydrationGoalModal(false);
       setTempHydrationGoal('');
     } else {
-      Alert.alert(t('profile.invalidGoal'), t('profile.enterValidGoal'));
+      displayCustomAlert(t('profile.invalidGoal'), t('profile.enterValidGoal'), 'error', [], 'warning');
     }
   };
 
@@ -143,10 +170,10 @@ const ProfileScreen = ({ navigation }) => {
       }
       
       setShowProfileModal(false);
-      Alert.alert(t('common.success'), t('profile.profileUpdatedSuccessfully'));
+      displayCustomAlert(t('common.success'), t('profile.profileUpdatedSuccessfully'), 'success', [], 'checkmark-circle');
     } catch (error) {
       console.error('Profile update error:', error);
-      Alert.alert(t('common.error'), t('profile.failedToUpdateProfile'));
+      displayCustomAlert(t('common.error'), t('profile.failedToUpdateProfile'), 'error', [], 'close-circle');
     }
   };
 
@@ -166,46 +193,60 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleResetAchievements = () => {
-    Alert.alert(
-      'Reset Achievements',
-      'This will reset all achievements to locked state. This action cannot be undone.',
+    displayCustomAlert(
+      t('achievements.resetTitle'), 
+      t('achievements.resetMessage'), 
+      'warning',
       [
-        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Reset', 
-          style: 'destructive', 
+          text: t('common.cancel'), 
+          onPress: () => setShowCustomAlert(false),
+          style: 'cancel'
+        },
+        { 
+          text: t('achievements.resetButton'), 
           onPress: async () => {
+            setShowCustomAlert(false);
             try {
               await resetAchievements();
-              Alert.alert(t('common.success'), 'Achievements have been reset successfully!');
+              displayCustomAlert(t('common.success'), t('achievements.resetSuccess'), 'success', [], 'checkmark-circle');
             } catch (error) {
-              Alert.alert(t('common.error'), 'Failed to reset achievements. Please try again.');
+              displayCustomAlert(t('common.error'), t('achievements.resetError'), 'error', [], 'close-circle');
             }
-          }
+          },
+          style: 'destructive'
         }
-      ]
+      ],
+      'warning'
     );
   };
 
   const handleCleanupDuplicateAchievements = () => {
-    Alert.alert(
-      'Cleanup Duplicate Achievements',
-      'This will remove all duplicate achievements and reset them to the default 4 achievements. This action cannot be undone.',
+    displayCustomAlert(
+      t('achievements.cleanupTitle'), 
+      t('achievements.cleanupMessage'), 
+      'warning',
       [
-        { text: t('common.cancel'), style: 'cancel' },
         { 
-          text: 'Cleanup', 
-          style: 'destructive', 
+          text: t('common.cancel'), 
+          onPress: () => setShowCustomAlert(false),
+          style: 'cancel'
+        },
+        { 
+          text: t('achievements.cleanupButton'), 
           onPress: async () => {
+            setShowCustomAlert(false);
             try {
               await cleanupDuplicateAchievements();
-              Alert.alert(t('common.success'), 'Duplicate achievements have been cleaned up successfully!');
+              displayCustomAlert(t('common.success'), t('achievements.cleanupSuccess'), 'success', [], 'checkmark-circle');
             } catch (error) {
-              Alert.alert(t('common.error'), 'Failed to cleanup achievements. Please try again.');
+              displayCustomAlert(t('common.error'), t('achievements.cleanupError'), 'error', [], 'close-circle');
             }
-          }
+          },
+          style: 'destructive'
         }
-      ]
+      ],
+      'warning'
     );
   };
 
@@ -399,20 +440,31 @@ const ProfileScreen = ({ navigation }) => {
             t('profile.clearData'),
             t('profile.resetApp'),
             () => {
-              Alert.alert(
+              displayCustomAlert(
                 t('profile.clearData'),
                 t('profile.clearDataWarning'),
+                'warning',
                 [
-                  { text: t('common.cancel'), style: 'cancel' },
-                  { text: t('profile.clearData'), style: 'destructive', onPress: async () => {
-                    try {
-                      await clearData();
-                      Alert.alert(t('common.success'), 'All data has been cleared successfully!');
-                    } catch (error) {
-                      Alert.alert(t('common.error'), 'Failed to clear data. Please try again.');
-                    }
-                  } }
-                ]
+                  { 
+                    text: t('common.cancel'), 
+                    onPress: () => setShowCustomAlert(false),
+                    style: 'cancel'
+                  },
+                  { 
+                    text: t('profile.clearDataButton'), 
+                    onPress: async () => {
+                      setShowCustomAlert(false);
+                      try {
+                        await clearData();
+                        displayCustomAlert(t('common.success'), t('profile.clearDataSuccess'), 'success', [], 'checkmark-circle');
+                      } catch (error) {
+                        displayCustomAlert(t('common.error'), t('profile.clearDataError'), 'error', [], 'close-circle');
+                      }
+                    },
+                    style: 'destructive'
+                  }
+                ],
+                'warning'
               );
             }
           )}
@@ -796,6 +848,54 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Custom Alert Modal */}
+      <Modal
+        visible={showCustomAlert}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCustomAlert(false)}
+      >
+        <View style={styles.customAlertOverlay}>
+          <View style={styles.customAlertContainer}>
+            <View style={[styles.customAlertIconContainer, { backgroundColor: customAlertData.type === 'success' ? '#F0FDFC' : customAlertData.type === 'error' ? '#FEF2F2' : '#FFF3E0' }]}>
+              <Ionicons 
+                name={customAlertData.icon} 
+                size={50} 
+                color={customAlertData.type === 'success' ? '#4ECDC4' : customAlertData.type === 'error' ? '#E74C3C' : '#FF9800'} 
+              />
+            </View>
+            
+            <Text style={styles.customAlertTitle}>{customAlertData.title}</Text>
+            <Text style={styles.customAlertMessage}>{customAlertData.message}</Text>
+            
+            <View style={styles.customAlertButtons}>
+              {customAlertData.buttons.map((button, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.customAlertButton,
+                    button.style === 'destructive' && styles.destructiveButton,
+                    button.style === 'cancel' && styles.cancelAlertButton,
+                    button.style === 'primary' && styles.primaryAlertButton,
+                    customAlertData.buttons.length === 1 && { width: '100%' }
+                  ]}
+                  onPress={button.onPress}
+                >
+                  <Text style={[
+                    styles.customAlertButtonText,
+                    button.style === 'destructive' && styles.destructiveButtonText,
+                    button.style === 'cancel' && styles.cancelAlertButtonText,
+                    button.style === 'primary' && styles.primaryAlertButtonText
+                  ]}>
+                    {button.text}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1156,6 +1256,87 @@ const styles = StyleSheet.create({
   },
   selectedLanguageOptionText: {
     color: '#FFFFFF',
+  },
+  // Custom Alert Modal Styles
+  customAlertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  customAlertContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 25,
+    width: '90%',
+    maxWidth: 350,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  customAlertIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  customAlertTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  customAlertMessage: {
+    fontSize: 16,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 25,
+  },
+  customAlertButtons: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  customAlertButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  primaryAlertButton: {
+    backgroundColor: '#4ECDC4',
+  },
+  destructiveButton: {
+    backgroundColor: '#E74C3C',
+  },
+  cancelAlertButton: {
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E1E8ED',
+  },
+  customAlertButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  primaryAlertButtonText: {
+    color: '#FFFFFF',
+  },
+  destructiveButtonText: {
+    color: '#FFFFFF',
+  },
+  cancelAlertButtonText: {
+    color: '#7F8C8D',
   },
 });
 

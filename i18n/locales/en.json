@@ -7,7 +7,8 @@
     "error": "Error",
     "loading": "Loading...",
     "notSet": "Not Set",
-    "exporting": "Exporting..."
+    "exporting": "Exporting...",
+    "ok": "OK"
   },
   "navigation": {
     "fasting": "Fasting",
@@ -56,7 +57,19 @@
       "20:4Desc": "Fast for 20 hours, eat within 4 hours",
       "24:0": "24 Hour Fast",
       "24:0Desc": "One meal a day (OMAD)"
-    }
+    },
+    "congratulationsMessage": "Great job! You've completed your fast successfully.",
+    "updateWeight": "Update Your Weight",
+    "trackProgress": "Track your weight loss progress",
+    "skipWeightEntry": "Skip weight entry for now",
+    "completeFast": "Complete Fast",
+    "fastEnded": "Your fast has been completed successfully!",
+    "fastEndedWithWeight": "Your fast has been completed and weight has been recorded!",
+    "errorEndingFast": "There was an error ending your fast. Please try again.",
+    "elapsedTime": "Elapsed Time",
+    "extended": "Extended",
+    "extendedFasting": "Extended Fasting",
+    "fastType": "Fast Type"
   },
   "stats": {
     "weeklyMetrics": "Weekly Metrics",
@@ -103,7 +116,9 @@
     "caloriesBurned": "Calories Burned",
     "fastingHours": "Fasting Hours",
     "weeklyProgress": "Weekly Progress",
-    "monthlyProgress": "Monthly Progress"
+    "monthlyProgress": "Monthly Progress",
+    "goalMet": "Goal met",
+    "goalNotMet": "Goal not met"
   },
   "weight": {
     "invalidWeight": "Invalid Weight",
@@ -185,7 +200,10 @@
     "failedToUpdateProfile": "Failed to update profile. Please try again.",
     "enterWeightIn": "Enter weight in",
     "setHydrationGoal": "Set Hydration Goal",
-    "enterGoalIn": "Enter goal in"
+    "enterGoalIn": "Enter goal in",
+    "clearDataButton": "DELETE ALL DATA",
+    "clearDataSuccess": "All data has been cleared successfully!",
+    "clearDataError": "Failed to clear data. Please try again."
   },
   "achievements": {
     "yourProgress": "Your Progress",
@@ -207,7 +225,17 @@
     "longestFastTitle": "Marathon Faster",
     "longestFastDescription": "Complete a 24-hour fast",
     "weightMilestoneTitle": "Weight Goal",
-    "weightMilestoneDescription": "Reach your target weight"
+    "weightMilestoneDescription": "Reach your target weight",
+    "resetTitle": "Reset Achievements",
+    "resetMessage": "This will reset all achievements to locked state. This action cannot be undone.",
+    "resetButton": "RESET",
+    "resetSuccess": "Achievements have been reset successfully!",
+    "resetError": "Failed to reset achievements. Please try again.",
+    "cleanupTitle": "Cleanup Duplicate Achievements",
+    "cleanupMessage": "This will remove all duplicate achievements and reset them to the default 4 achievements. This action cannot be undone.",
+    "cleanupButton": "CLEANUP",
+    "cleanupSuccess": "Duplicate achievements have been cleaned up successfully!",
+    "cleanupError": "Failed to cleanup achievements. Please try again."
   },
   "weightEntry": {
     "title": "Weight Entry",

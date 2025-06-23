@@ -18,7 +18,9 @@
     "daily": "zilnic",
     "notSet": "Nesetat",
     "exporting": "Se exportă...",
-    "gotIt": "Am înțeles!"
+    "saving": "Se salvează...",
+    "gotIt": "Am înțeles!",
+    "ok": "OK"
   },
   "navigation": {
     "fasting": "Post",
@@ -36,7 +38,7 @@
     "intermittentFast": "POST INTERMITENT",
     "chooseFastingWindow": "Alege fereastra de post",
     "readyToStart": "Gata să începi",
-    "started": "Început",
+    "started": "Începutul Postului",
     "fastEnding": "Sfârșitul Postului",
     "water": "Apă",
     "mlOf": "ml din {{goal}} ml",
@@ -67,7 +69,19 @@
       "20:4Desc": "Postește 20 ore, mănâncă în 4 ore",
       "24:0": "Post de 24 Ore",
       "24:0Desc": "O masă pe zi (OMAD)"
-    }
+    },
+    "congratulationsMessage": "Felicitări! Ai finalizat postul cu succes.",
+    "updateWeight": "Actualizează Greutatea",
+    "trackProgress": "Urmărește progresul pierderii în greutate",
+    "skipWeightEntry": "Sări peste introducerea greutății pentru moment",
+    "completeFast": "Finalizează Postul",
+    "fastEnded": "Postul tău a fost finalizat cu succes!",
+    "fastEndedWithWeight": "Postul tău a fost finalizat și greutatea a fost înregistrată!",
+    "errorEndingFast": "A apărut o eroare la finalizarea postului. Te rog să încerci din nou.",
+    "elapsedTime": "Timp Scurs",
+    "extended": "Prelungit",
+    "extendedFasting": "POST INTERMITENT EXTINS",
+    "fastType": "Tipul Postului"
   },
   "stats": {
     "weeklyMetrics": "Metrici Săptămânale",
@@ -118,7 +132,9 @@
     "totalHours": "Ore Totale",
     "longestDay": "Cea Mai Lungă Zi",
     "threePlusDays": "3+ zile",
-    "building": "Se construiește..."
+    "building": "Se construiește...",
+    "goalMet": "Obiectiv atins",
+    "goalNotMet": "Obiectiv neatins"
   },
   "weight": {
     "invalidWeight": "Greutate Invalidă",
@@ -200,7 +216,10 @@
     "enterName": "Introdu numele tău",
     "enterAge": "Introdu vârsta ta",
     "enterHeight": "Introdu înălțimea ta în cm",
-    "enterWeight": "Introdu greutatea ta în {{unit}}"
+    "enterWeight": "Introdu greutatea ta în {{unit}}",
+    "clearDataButton": "ȘTERGE DATELE",
+    "clearDataSuccess": "Toate datele au fost șterse cu succes!",
+    "clearDataError": "Ștergerea datelor a eșuat. Te rog să încerci din nou."
   },
   "achievements": {
     "yourProgress": "Progresul Tău",
@@ -222,7 +241,17 @@
     "longestFastTitle": "Postitor Maraton",
     "longestFastDescription": "Completează un post de 24 de ore",
     "weightMilestoneTitle": "Obiectiv de Greutate",
-    "weightMilestoneDescription": "Atinge greutatea țintă"
+    "weightMilestoneDescription": "Atinge greutatea țintă",
+    "resetTitle": "Resetează Realizările",
+    "resetMessage": "Aceasta va reseta toate realizările la starea blocată. Această acțiune nu poate fi anulată.",
+    "resetButton": "RESETEAZĂ",
+    "resetSuccess": "Realizările au fost resetate cu succes!",
+    "resetError": "Resetarea realizărilor a eșuat. Te rog să încerci din nou.",
+    "cleanupTitle": "Curăță Realizările Duplicate",
+    "cleanupMessage": "Aceasta va elimina toate realizările duplicate și le va reseta la cele 4 realizări implicite. Această acțiune nu poate fi anulată.",
+    "cleanupButton": "CURĂȚĂ",
+    "cleanupSuccess": "Realizările duplicate au fost curățate cu succes!",
+    "cleanupError": "Curățarea realizărilor a eșuat. Te rog să încerci din nou."
   },
   "weightEntry": {
     "title": "Introducere Greutate",

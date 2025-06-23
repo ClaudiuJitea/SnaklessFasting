@@ -14,9 +14,7 @@ const WelcomeScreen = ({ navigation }) => {
     navigation.replace('Main');
   };
 
-  const handleAlreadyHaveAccount = () => {
-    navigation.replace('Main');
-  };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -49,13 +47,6 @@ const WelcomeScreen = ({ navigation }) => {
             onPress={handleGetStarted}
           >
             <Text style={styles.getStartedText}>Get Started</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.loginButton}
-            onPress={handleAlreadyHaveAccount}
-          >
-            <Text style={styles.loginText}>I already have an account</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -162,15 +153,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  loginButton: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  loginText: {
-    color: '#7F8C8D',
-    fontSize: 16,
-    fontWeight: '500',
-  },
+
 });
 
 export default WelcomeScreen;

@@ -87,7 +87,8 @@ const useStore = create((set, get) => ({
     '16:8': { fast: 16, eat: 8 },
     '18:6': { fast: 18, eat: 6 },
     '20:4': { fast: 20, eat: 4 },
-    '24h': { fast: 24, eat: 0 }
+    '24h': { fast: 24, eat: 0 },
+    'extended': { fast: -1, eat: 0 } // -1 indicates unlimited fasting
   },
   fastingStreak: 0,
   
@@ -142,6 +143,20 @@ const useStore = create((set, get) => ({
     const now = dayjs();
     const elapsed = now.diff(startTime, 'second');
     const preset = fastingPresets[currentFastingSession.preset_type];
+    
+    // Handle extended fasting (unlimited)
+    if (preset && preset.fast === -1) {
+      return {
+        elapsed,
+        remaining: 0,
+        targetSeconds: -1, // Indicates unlimited
+        isCompleted: false, // Extended fasting is never automatically completed
+        startTime: startTime.toISOString(),
+        presetType: currentFastingSession.preset_type,
+        isExtended: true
+      };
+    }
+    
     const targetSeconds = preset ? preset.fast * 3600 : 16 * 3600;
     const remaining = Math.max(0, targetSeconds - elapsed);
 
@@ -151,7 +166,8 @@ const useStore = create((set, get) => ({
       targetSeconds,
       isCompleted: remaining === 0,
       startTime: startTime.toISOString(),
-      presetType: currentFastingSession.preset_type
+      presetType: currentFastingSession.preset_type,
+      isExtended: false
     };
   },
 

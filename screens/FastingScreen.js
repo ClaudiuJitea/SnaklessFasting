@@ -8,7 +8,11 @@ import {
   ScrollView,
   Alert,
   Animated,
-  Modal
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
@@ -19,6 +23,11 @@ import { useTranslation } from 'react-i18next';
 import useStore from '../store/useStore';
 
 dayjs.extend(duration);
+
+// Get screen dimensions for responsive design
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const isSmallScreen = screenWidth < 380 || screenHeight < 700;
+const circleSize = isSmallScreen ? Math.min(screenWidth * 0.6, 200) : 250;
 
 const FastingScreen = () => {
   const { t } = useTranslation();
@@ -31,12 +40,20 @@ const FastingScreen = () => {
     dailyHydration,
     hydrationGoal,
     addHydration,
-    loadDailyHydration
+    loadDailyHydration,
+    addWeight,
+    currentWeight,
+    settings
   } = useStore();
 
   const [timerInfo, setTimerInfo] = useState(null);
   const [selectedPreset, setSelectedPreset] = useState('16:8');
   const [showEndFastModal, setShowEndFastModal] = useState(false);
+  const [weight, setWeight] = useState('');
+  const [skipWeightEntry, setSkipWeightEntry] = useState(false);
+  const [isSubmittingWeight, setIsSubmittingWeight] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const animatedValue = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
@@ -58,14 +75,16 @@ const FastingScreen = () => {
         const info = getFastingTimer();
         setTimerInfo(info);
         
-        // Animate the progress circle
-        const progress = Math.min(info.elapsed / info.targetSeconds, 1);
-        
-        Animated.timing(animatedValue, {
-          toValue: progress,
-          duration: 1000,
-          useNativeDriver: false,
-        }).start();
+        // Animate the progress circle (only for timed fasting)
+        if (!info.isExtended) {
+          const progress = Math.min(info.elapsed / info.targetSeconds, 1);
+          
+          Animated.timing(animatedValue, {
+            toValue: progress,
+            duration: 1000,
+            useNativeDriver: false,
+          }).start();
+        }
       }
     }, 1000);
 
@@ -82,6 +101,7 @@ const FastingScreen = () => {
 
   const getCircleProgress = () => {
     if (!timerInfo) return 0;
+    if (timerInfo.isExtended) return 0; // No progress circle for extended fasting
     return Math.min(timerInfo.elapsed / timerInfo.targetSeconds, 1);
   };
 
@@ -94,34 +114,109 @@ const FastingScreen = () => {
     setShowEndFastModal(true);
   };
 
-  const confirmEndFasting = () => {
-    setShowEndFastModal(false);
-    endFasting();
+  const confirmEndFasting = async () => {
+    setIsSubmittingWeight(true);
+    
+    try {
+      // If weight is provided and valid, save it first
+      if (weight && !skipWeightEntry) {
+        const weightValue = parseFloat(weight);
+        if (weightValue > 0 && weightValue <= 500) {
+          await addWeight(weightValue);
+        }
+      }
+      
+      // End the fasting session
+      await endFasting();
+      
+      setShowEndFastModal(false);
+      setWeight('');
+      setSkipWeightEntry(false);
+      
+      // Show custom success modal
+      const message = weight && !skipWeightEntry 
+        ? t('fasting.fastEndedWithWeight')
+        : t('fasting.fastEnded');
+      setSuccessMessage(message);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Error ending fast:', error);
+      setSuccessMessage(t('fasting.errorEndingFast'));
+      setShowSuccessModal(true);
+    } finally {
+      setIsSubmittingWeight(false);
+    }
+  };
+
+  const getWeightUnit = () => {
+    return settings?.weightUnit || 'kg';
+  };
+
+  const getPlaceholderText = () => {
+    const unit = getWeightUnit();
+    return unit === 'kg' ? 'e.g., 70.5' : 'e.g., 155.5';
   };
 
   const handleAddWater = (amount) => {
     addHydration(amount);
   };
 
+  const getLocalizedPresetName = (preset) => {
+    if (preset === 'extended') {
+      return t('fasting.extended');
+    }
+    return preset;
+  };
+
   const renderPresetButtons = () => {
-    return Object.keys(fastingPresets).map((preset) => (
-      <TouchableOpacity
-        key={preset}
-        style={[
-          styles.presetButton,
-          selectedPreset === preset && styles.selectedPreset
-        ]}
-        onPress={() => setSelectedPreset(preset)}
-        disabled={!!currentFastingSession}
-      >
-        <Text style={[
-          styles.presetText,
-          selectedPreset === preset && styles.selectedPresetText
-        ]}>
-          {preset}
-        </Text>
-      </TouchableOpacity>
-    ));
+    const presets = Object.keys(fastingPresets);
+    const regularPresets = presets.filter(preset => preset !== 'extended');
+    const extendedPreset = presets.find(preset => preset === 'extended');
+
+    return (
+      <>
+        {/* Regular presets in 2x2 grid */}
+        {regularPresets.map((preset) => (
+          <TouchableOpacity
+            key={preset}
+            style={[
+              styles.presetButton,
+              selectedPreset === preset && styles.selectedPreset
+            ]}
+            onPress={() => setSelectedPreset(preset)}
+            disabled={!!currentFastingSession}
+          >
+            <Text style={[
+              styles.presetText,
+              selectedPreset === preset && styles.selectedPresetText
+            ]}>
+              {preset}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        
+        {/* Extended preset as full-width button */}
+        {extendedPreset && (
+          <TouchableOpacity
+            key={extendedPreset}
+            style={[
+              styles.presetButton,
+              styles.extendedPresetButton,
+              selectedPreset === extendedPreset && styles.selectedPreset
+            ]}
+            onPress={() => setSelectedPreset(extendedPreset)}
+            disabled={!!currentFastingSession}
+          >
+            <Text style={[
+              styles.presetText,
+              selectedPreset === extendedPreset && styles.selectedPresetText
+            ]}>
+              {t('fasting.extended')}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </>
+    );
   };
 
   return (
@@ -130,8 +225,11 @@ const FastingScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           {currentFastingSession && (
-            <Text style={styles.headerSubtitle}>
-              {timerInfo?.isCompleted ? t('fasting.fastCompleted') : `${selectedPreset} ${t('fasting.intermittentFast')}`}
+            <Text style={[styles.headerSubtitle, isSmallScreen && styles.headerSubtitleSmall]}>
+              {timerInfo?.isCompleted ? t('fasting.fastCompleted') : 
+               timerInfo?.isExtended ? t('fasting.extendedFasting') :
+               selectedPreset === 'extended' ? t('fasting.extendedFasting') :
+               `${selectedPreset} ${t('fasting.intermittentFast')}`}
             </Text>
           )}
         </View>
@@ -140,34 +238,34 @@ const FastingScreen = () => {
         <View style={styles.timerContainer}>
           <View style={styles.timerCircle}>
             {/* Animated Progress Circle with SVG */}
-            <Svg width={250} height={250} style={styles.svgCircle}>
+            <Svg width={circleSize} height={circleSize} style={styles.svgCircle}>
               {/* Background Circle */}
               <Circle
-                cx={125}
-                cy={125}
-                r={117}
+                cx={circleSize / 2}
+                cy={circleSize / 2}
+                r={circleSize / 2 - 8}
                 stroke="#E9ECEF"
                 strokeWidth={8}
                 fill="transparent"
               />
               {/* Progress Circle */}
               <AnimatedCircle
-                cx={125}
-                cy={125}
-                r={117}
+                cx={circleSize / 2}
+                cy={circleSize / 2}
+                r={circleSize / 2 - 8}
                 stroke={currentFastingSession ? animatedValue.interpolate({
                   inputRange: [0, 0.5, 1],
                   outputRange: ['#E74C3C', '#FF6B6B', '#4ECDC4'],
                 }) : 'transparent'}
                 strokeWidth={8}
                 fill="transparent"
-                strokeDasharray={735.4}
+                strokeDasharray={2 * Math.PI * (circleSize / 2 - 8)}
                 strokeDashoffset={currentFastingSession ? animatedValue.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [735.4, 0],
-                }) : 735.4}
+                  outputRange: [2 * Math.PI * (circleSize / 2 - 8), 0],
+                }) : 2 * Math.PI * (circleSize / 2 - 8)}
                 strokeLinecap="round"
-                transform="rotate(-90 125 125)"
+                transform={`rotate(-90 ${circleSize / 2} ${circleSize / 2})`}
               />
             </Svg>
             
@@ -176,6 +274,8 @@ const FastingScreen = () => {
               style={[
                 styles.progressIndicator,
                 {
+                  width: circleSize,
+                  height: circleSize,
                   transform: [
                     {
                       rotate: currentFastingSession ? animatedValue.interpolate({
@@ -201,7 +301,7 @@ const FastingScreen = () => {
             <View style={styles.timerContent}>
               {currentFastingSession ? (
                 <>
-                  <Text style={styles.elapsedLabel}>Elapsed Time</Text>
+                  <Text style={styles.elapsedLabel}>{t('fasting.elapsedTime')}</Text>
                   <Text style={styles.timerText}>
                     {timerInfo ? formatTime(timerInfo.elapsed) : '00:00:00'}
                   </Text>
@@ -214,7 +314,7 @@ const FastingScreen = () => {
               ) : (
                 <>
                   <Text style={styles.readyText}>{t('fasting.readyToStart')}</Text>
-                  <Text style={styles.presetDisplay}>{selectedPreset}</Text>
+                  <Text style={[styles.presetDisplay, isSmallScreen && styles.presetDisplaySmall]} numberOfLines={2} adjustsFontSizeToFit>{getLocalizedPresetName(selectedPreset)}</Text>
                 </>
               )}
             </View>
@@ -237,12 +337,21 @@ const FastingScreen = () => {
                 {dayjs(currentFastingSession.start_time).format('MMM D, HH:mm')}
               </Text>
             </View>
-            <View style={styles.sessionRow}>
-              <Text style={styles.sessionLabel}>{t('fasting.fastEnding')}</Text>
-              <Text style={styles.sessionValue}>
-                {timerInfo ? dayjs(currentFastingSession.start_time).add(timerInfo.targetSeconds, 'second').format('MMM D, HH:mm') : '--'}
-              </Text>
-            </View>
+            {timerInfo?.isExtended ? (
+              <View style={styles.sessionRow}>
+                <Text style={styles.sessionLabel}>{t('fasting.fastType')}</Text>
+                <Text style={styles.sessionValue}>
+                  {t('fasting.extendedFasting')}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.sessionRow}>
+                <Text style={styles.sessionLabel}>{t('fasting.fastEnding')}</Text>
+                <Text style={styles.sessionValue}>
+                  {timerInfo ? dayjs(currentFastingSession.start_time).add(timerInfo.targetSeconds, 'second').format('MMM D, HH:mm') : '--'}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -306,39 +415,119 @@ const FastingScreen = () => {
         )}
       </ScrollView>
 
-      {/* Custom End Fast Modal */}
+      {/* Custom End Fast Modal with Weight Entry */}
       <Modal
         visible={showEndFastModal}
         transparent={true}
         animationType="fade"
         onRequestClose={() => setShowEndFastModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View style={styles.customModalContainer}>
-            <View style={styles.modalHeader}>
-              <Ionicons name="warning" size={32} color="#E74C3C" />
-            </View>
-            
-            <Text style={styles.modalTitle}>{t('fasting.endFasting')}</Text>
-            <Text style={styles.modalMessage}>
-              {t('fasting.confirmEndMessage')}
-            </Text>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelModalButton]}
-                onPress={() => setShowEndFastModal(false)}
-              >
-                <Text style={styles.cancelModalButtonText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.modalHeader}>
+                <Ionicons name="checkmark-circle" size={32} color="#4ECDC4" />
+              </View>
               
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmModalButton]}
-                onPress={confirmEndFasting}
-              >
-                <Text style={styles.confirmModalButtonText}>{t('fasting.endFast')}</Text>
-              </TouchableOpacity>
+              <Text style={styles.modalTitle}>{t('fasting.endFasting')}</Text>
+              <Text style={styles.modalMessage}>
+                {t('fasting.congratulationsMessage')}
+              </Text>
+              
+              {/* Weight Entry Section */}
+              <View style={styles.weightEntrySection}>
+                <Text style={styles.weightSectionTitle}>{t('fasting.updateWeight')}</Text>
+                <Text style={styles.weightSectionSubtitle}>{t('fasting.trackProgress')}</Text>
+                
+                {!skipWeightEntry && (
+                  <View style={styles.weightInputContainer}>
+                    <View style={styles.weightInputWrapper}>
+                      <TextInput
+                        style={styles.weightInput}
+                        value={weight}
+                        onChangeText={setWeight}
+                        placeholder={getPlaceholderText()}
+                        placeholderTextColor="#BDC3C7"
+                        keyboardType="decimal-pad"
+                        maxLength={6}
+                      />
+                      <Text style={styles.weightUnitText}>{getWeightUnit()}</Text>
+                    </View>
+                    
+                    {currentWeight && (
+                      <Text style={styles.previousWeightText}>
+                        {t('weight.current')}: {currentWeight} {getWeightUnit()}
+                      </Text>
+                    )}
+                  </View>
+                )}
+                
+                <TouchableOpacity
+                  style={styles.skipWeightButton}
+                  onPress={() => setSkipWeightEntry(!skipWeightEntry)}
+                >
+                  <Ionicons 
+                    name={skipWeightEntry ? "checkbox" : "square-outline"} 
+                    size={20} 
+                    color="#7F8C8D" 
+                  />
+                  <Text style={styles.skipWeightText}>{t('fasting.skipWeightEntry')}</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelModalButton]}
+                  onPress={() => {
+                    setShowEndFastModal(false);
+                    setWeight('');
+                    setSkipWeightEntry(false);
+                  }}
+                  disabled={isSubmittingWeight}
+                >
+                  <Text style={styles.cancelModalButtonText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.confirmModalButton]}
+                  onPress={confirmEndFasting}
+                  disabled={isSubmittingWeight}
+                >
+                  <Text style={styles.confirmModalButtonText}>
+                    {isSubmittingWeight ? t('common.saving') : t('fasting.completeFast')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Custom Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContainer}>
+            <View style={styles.successIconContainer}>
+              <Ionicons name="checkmark-circle" size={60} color="#4ECDC4" />
             </View>
+            
+            <Text style={styles.successModalTitle}>{t('fasting.fastCompleted')}</Text>
+            <Text style={styles.successModalMessage}>{successMessage}</Text>
+            
+            <TouchableOpacity
+              style={styles.successModalButton}
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={styles.successModalButtonText}>{t('common.ok') || 'OK'}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -372,15 +561,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#7F8C8D',
     textAlign: 'center',
+    paddingHorizontal: 10,
+    flexWrap: 'wrap',
+  },
+  headerSubtitleSmall: {
+    fontSize: 14,
+    lineHeight: 18,
   },
   timerContainer: {
     alignItems: 'center',
     marginBottom: 40,
   },
   timerCircle: {
-    width: 250,
-    height: 250,
-    borderRadius: 125,
+    width: circleSize,
+    height: circleSize,
+    borderRadius: circleSize / 2,
     backgroundColor: '#F8F9FA',
     justifyContent: 'center',
     alignItems: 'center',
@@ -393,8 +588,6 @@ const styles = StyleSheet.create({
   },
   progressIndicator: {
     position: 'absolute',
-    width: 250,
-    height: 250,
     justifyContent: 'flex-start',
     alignItems: 'center',
     top: 0,
@@ -438,6 +631,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FF6B6B',
+    textAlign: 'center',
+    paddingHorizontal: 10,
+  },
+  presetDisplaySmall: {
+    fontSize: 18,
+    lineHeight: 22,
   },
   completedBadge: {
     marginTop: 10,
@@ -468,6 +667,10 @@ const styles = StyleSheet.create({
     borderColor: '#E9ECEF',
     marginBottom: 10,
     alignItems: 'center',
+  },
+  extendedPresetButton: {
+    width: '100%',
+    marginTop: 5,
   },
   selectedPreset: {
     backgroundColor: '#FF6B6B',
@@ -600,9 +803,10 @@ const styles = StyleSheet.create({
   customModalContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 24,
+    padding: 20,
     width: '100%',
-    maxWidth: 320,
+    maxWidth: 350,
+    maxHeight: '85%',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -614,27 +818,27 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   modalHeader: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FEF2F2',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F0FDFC',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#2C3E50',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   modalMessage: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#7F8C8D',
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    lineHeight: 20,
+    marginBottom: 16,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -661,6 +865,132 @@ const styles = StyleSheet.create({
     color: '#7F8C8D',
   },
   confirmModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  // Weight Entry Modal Styles
+  weightEntrySection: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  weightSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 3,
+    textAlign: 'center',
+  },
+  weightSectionSubtitle: {
+    fontSize: 12,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  weightInputContainer: {
+    marginBottom: 12,
+  },
+  weightInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E1E8ED',
+  },
+  weightInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#2C3E50',
+    padding: 0,
+  },
+  weightUnitText: {
+    fontSize: 14,
+    color: '#7F8C8D',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  previousWeightText: {
+    fontSize: 11,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  skipWeightButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+  },
+  skipWeightText: {
+    fontSize: 12,
+    color: '#7F8C8D',
+    marginLeft: 6,
+  },
+  // Custom Success Modal Styles
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  successModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 30,
+    width: '90%',
+    maxWidth: 320,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  successIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F0FDFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  successModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  successModalMessage: {
+    fontSize: 16,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 25,
+  },
+  successModalButton: {
+    backgroundColor: '#4ECDC4',
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 25,
+    shadowColor: '#4ECDC4',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  successModalButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',

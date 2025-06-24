@@ -3,6 +3,8 @@
 A comprehensive React Native mobile application for tracking intermittent fasting with beautiful UI, detailed statistics, and achievement system. Built with Expo and modern React Native technologies.
 
 <div align="center">
+  <!-- Top centered icon -->
+  <img src="https://raw.githubusercontent.com/ClaudiuJitea/SnaklessFasting/main/assets/icon.png" alt="App Icon" width="128" style="margin: 20px 0;" />
 
   <!-- First row of 3 images -->
   <div style="display: flex; justify-content: center; gap: 10px; margin: 10px 0;">

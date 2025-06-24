@@ -32,7 +32,7 @@ const WelcomeScreen = ({ navigation }) => {
         {/* Title and Description */}
         <View style={styles.textContainer}>
           <Text style={styles.title}>Start your journey with</Text>
-          <Text style={styles.brandName}>SkipMeal</Text>
+          <Text style={styles.brandName}>SnaklessFasting</Text>
           <Text style={styles.subtitle}>today</Text>
           
           <Text style={styles.description}>

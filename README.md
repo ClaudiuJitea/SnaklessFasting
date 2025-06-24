@@ -3,7 +3,8 @@
 A comprehensive React Native mobile application for tracking intermittent fasting with beautiful UI, detailed statistics, and achievement system. Built with Expo and modern React Native technologies.
 
 <div align="center">
-  <img src="./assets/icon.png" alt="NutritionAI Logo" width="128" height="128">
+  ![icon](https://github.com/user-attachments/assets/106ed9e2-01b2-48e8-b870-fa8fb77b010c)
+
 
   <!-- First row of 3 images -->
   <div style="display: flex; justify-content: center; gap: 10px; margin: 10px 0;">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -34,8 +34,10 @@ const ProfileScreen = ({ navigation }) => {
     calculateBMI,
     getHealthStatus,
     resetAchievements,
-  clearData,
-    cleanupDuplicateAchievements
+    clearData,
+    cleanupDuplicateAchievements,
+    weeklyStats,
+    loadWeeklyStats
   } = useStore();
 
   const [isExporting, setIsExporting] = useState(false);
@@ -64,6 +66,13 @@ const ProfileScreen = ({ navigation }) => {
     buttons: [],
     icon: 'checkmark-circle'
   });
+
+  // Load weekly stats when component mounts
+  useEffect(() => {
+    if (loadWeeklyStats) {
+      loadWeeklyStats();
+    }
+  }, [loadWeeklyStats]);
 
   const changeLanguage = async (languageCode) => {
     await i18n.changeLanguage(languageCode);
@@ -322,7 +331,7 @@ const ProfileScreen = ({ navigation }) => {
       </View>
       
       <View style={styles.statCard}>
-        <Text style={styles.statValue}>3</Text>
+        <Text style={styles.statValue}>{weeklyStats?.currentStreak || 0}</Text>
         <Text style={styles.statLabel}>{t('stats.currentStreak')}</Text>
         <Text style={styles.statUnit}>days</Text>
       </View>
